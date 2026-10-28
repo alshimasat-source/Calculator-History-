@@ -3,791 +3,199 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="theme-color" content="#ffffff">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="Calculator History">
-    <meta name="application-name" content="Calculator History">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Calculator History</title>
-
-    <!-- توليد أيقونة التطبيق الخارجية (+ - % =) وملف Manifest تلقائياً لـ GitHub و APK -->
-    <link id="dynamicFavicon" rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='115' fill='%23ffffff'/%3E%3Crect x='16' y='16' width='480' height='480' rx='105' fill='none' stroke='%23e2e8f0' stroke-width='12'/%3E%3Crect x='56' y='56' width='184' height='184' rx='46' fill='%23f1f5f9'/%3E%3Ctext x='148' y='178' font-family='Arial,sans-serif' font-size='115' font-weight='bold' fill='%231d65f0' text-anchor='middle'%3E+%3C/text%3E%3Crect x='272' y='56' width='184' height='184' rx='46' fill='%23f1f5f9'/%3E%3Ctext x='364' y='175' font-family='Arial,sans-serif' font-size='125' font-weight='bold' fill='%231d65f0' text-anchor='middle'%3E%E2%88%92%3C/text%3E%3Crect x='56' y='272' width='184' height='184' rx='46' fill='%23f1f5f9'/%3E%3Ctext x='148' y='392' font-family='Arial,sans-serif' font-size='95' font-weight='bold' fill='%23111827' text-anchor='middle'%3E%25%3C/text%3E%3Crect x='272' y='272' width='184' height='184' rx='46' fill='%231d65f0'/%3E%3Ctext x='364' y='398' font-family='Arial,sans-serif' font-size='120' font-weight='bold' fill='%23ffffff' text-anchor='middle'%3E=%3C/text%3E%3C/svg%3E">
-    <link id="appleTouchIcon" rel="apple-touch-icon" href="">
-
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --oneui-bg: #ffffff;
-            --oneui-btn-num: #f4f5f7;
-            --oneui-btn-op: #eaf0fb;
-            --oneui-text-main: #111827;
-            --oneui-accent: #1d65f0;
-        }
-
-        * {
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-            user-select: none;
-        }
-
-        html, body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background-color: #ffffff;
-            font-family: 'Inter', 'Tajawal', sans-serif;
-            color: var(--oneui-text-main);
-        }
-
-        .calc-btn {
-            transition: transform 0.08s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.12s ease;
-        }
-        .calc-btn:active {
-            transform: scale(0.92);
-            filter: brightness(0.93);
-        }
-
-        @keyframes pulse-ring {
-            0% { transform: scale(0.96); box-shadow: 0 0 0 0 rgba(29, 101, 240, 0.45); }
-            70% { transform: scale(1); box-shadow: 0 0 0 18px rgba(29, 101, 240, 0); }
-            100% { transform: scale(0.96); box-shadow: 0 0 0 0 rgba(29, 101, 240, 0); }
-        }
-        .fingerprint-pulse {
-            animation: pulse-ring 2s infinite;
-        }
-
-        ::-webkit-scrollbar {
-            width: 4px;
-            height: 4px;
-        }
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 10px;
-        }
+        body { background-color: #ffffff; font-family: system-ui, -apple-system, sans-serif; }
+        .calc-btn { transition: transform 0.08s ease, background-color 0.1s ease; }
+        .calc-btn:active { transform: scale(0.92); filter: brightness(0.93); }
     </style>
 </head>
-<body class="w-full h-full flex items-center justify-center bg-white">
+<body class="w-full h-screen flex items-center justify-center bg-white overflow-hidden">
 
-    <main class="relative w-full h-full max-w-[480px] mx-auto bg-white flex flex-col justify-between overflow-hidden">
+    <main class="w-full h-full max-w-[480px] bg-white flex flex-col justify-between p-4">
         
-        <!-- الشريط العلوي: اسم التطبيق Calculator History + الشعار الخارجي (+ - % =) + إعداد البصمة -->
-        <header class="flex items-center justify-between px-4 pt-3 pb-2 border-b border-gray-100 z-20 shrink-0" dir="ltr">
-            <div class="flex items-center gap-2.5">
-                <div class="w-8 h-8 rounded-xl bg-gray-50 border border-gray-200 p-1 grid grid-cols-2 gap-0.5 shadow-sm shrink-0">
-                    <span class="bg-white rounded-[4px] flex items-center justify-center text-[10px] font-bold text-[#1d65f0] leading-none">+</span>
-                    <span class="bg-white rounded-[4px] flex items-center justify-center text-[10px] font-bold text-[#1d65f0] leading-none">−</span>
-                    <span class="bg-white rounded-[4px] flex items-center justify-center text-[9px] font-bold text-gray-800 leading-none">%</span>
-                    <span class="bg-[#1d65f0] rounded-[4px] flex items-center justify-center text-[10px] font-bold text-white leading-none">=</span>
-                </div>
-                <span class="font-bold text-sm sm:text-base text-gray-900 tracking-tight">Calculator History</span>
-            </div>
-            
-            <div class="flex items-center gap-1.5" dir="rtl">
-                <button id="bioHeaderBtn" type="button" onclick="openBiometricSettings()" class="flex items-center gap-1 bg-blue-50 hover:bg-blue-100 text-blue-600 px-2.5 py-1.5 rounded-full transition text-[11px] font-bold border border-blue-200">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4"/>
-                    </svg>
-                    <span id="bioStatusBadge">تفعيل البصمة</span>
-                </button>
-
-                <button id="quickLockBtn" type="button" onclick="lockAppIfEnabled()" class="hidden items-center gap-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-2.5 py-1.5 rounded-full transition text-[11px] font-medium">
-                    <svg class="w-3.5 h-3.5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                    </svg>
-                    <span>قفل</span>
+        <!-- الشريط العلوي -->
+        <header class="flex items-center justify-between pb-3 border-b border-gray-100" dir="ltr">
+            <span class="font-bold text-base text-gray-900">Calculator History</span>
+            <div class="flex items-center gap-2" dir="rtl">
+                <button type="button" onclick="openBioSettings()" class="bg-blue-50 text-blue-600 px-3 py-1.5 rounded-full text-xs font-bold border border-blue-200">
+                    تفعيل البصمة
                 </button>
             </div>
         </header>
 
-        <!-- نافذة التفعيل الأولي للبصمة -->
-        <div id="setupBioModal" class="hidden absolute inset-0 bg-white z-50 flex flex-col justify-between p-6 text-center">
-            <div class="flex items-center justify-between border-b border-gray-100 pb-3">
-                <span class="text-sm font-bold text-gray-800">إعداد وتفعيل بصمة الهاتف</span>
-                <button type="button" onclick="closeBiometricSettings()" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-full font-medium">رجوع ✕</button>
+        <!-- شاشة تفعيل البصمة -->
+        <div id="bioModal" class="hidden absolute inset-0 bg-white z-50 flex flex-col justify-between p-6 text-center">
+            <div class="flex justify-between items-center border-b pb-3">
+                <span class="text-sm font-bold">إعداد بصمة الحماية</span>
+                <button type="button" onclick="closeBioSettings()" class="text-xs bg-gray-100 px-3 py-1 rounded-full">إغلاق ✕</button>
             </div>
-
-            <div class="my-auto flex flex-col items-center space-y-4 max-w-xs mx-auto w-full">
-                <div class="w-16 h-16 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shadow-sm">
-                    <svg class="w-9 h-9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M2 12C2 6.5 6.5 2 12 2a10 10 0 0 1 8 4"/>
-                        <path d="M5 19.5C5.5 18 6 15 6 12c0-.7.12-1.37.34-2"/>
-                        <path d="M17.29 21.02c.12-.6.43-2.3.5-3.02"/>
-                        <path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4"/>
-                        <path d="M8.65 22c.21-.66.45-1.32.57-2"/>
-                        <path d="M14 13.12c0 2.38 0 6.38-1 8.88"/>
-                        <path d="M9 6.8a6 6 0 0 1 9 5.2c0 .47 0 1.17-.02 2"/>
-                    </svg>
+            <div class="my-auto space-y-4">
+                <div class="bg-blue-50 border border-blue-200 rounded-xl p-3 text-right">
+                    <p class="text-xs text-blue-800 font-bold mb-1">تعليمات:</p>
+                    <p class="text-[11px] text-blue-700">اضغط على زر التفعيل أدناه لربط بصمة هاتفك بالحاسبة.</p>
                 </div>
-
-                <h2 class="text-lg font-bold text-gray-900">تأكيد البصمة مع الهاتف أولاً</h2>
-                <p class="text-xs text-gray-500 leading-relaxed">
-                    اضغط على زر التفعيل بالأسفل ليقوم الهاتف بالتحقق من مستشعر البصمة وربطه بتطبيق <strong>Calculator History</strong> قبل تفعيل القفل.
-                </p>
-
-                <div class="w-full bg-gray-50 border border-gray-200 rounded-2xl p-3.5 text-right text-xs space-y-1.5">
-                    <div class="flex items-center justify-between">
-                        <span class="text-gray-500">حالة القفل بالبصمة:</span>
-                        <span id="enrollStateText" class="font-bold text-amber-600">غير مفعّلة بعد</span>
-                    </div>
-                    <div class="flex items-center justify-between">
-                        <span class="text-gray-500">مستشعر الهاتف:</span>
-                        <span id="hardwareStateText" class="font-semibold text-gray-700">جاهز للربط</span>
-                    </div>
-                </div>
-
-                <button id="enrollActionBtn" type="button" onclick="registerAndVerifyFingerprint()" class="w-full py-3.5 rounded-2xl bg-[#1d65f0] hover:bg-blue-700 active:scale-98 text-white font-bold text-sm shadow-lg shadow-blue-600/20 transition flex items-center justify-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-                    </svg>
-                    <span>تفعيل وتأكيد البصمة مع الهاتف الآن</span>
-                </button>
-
-                <button id="disableBioBtn" type="button" onclick="disableBiometricLock()" class="hidden w-full py-2.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 font-semibold text-xs transition">
-                    إيقاف قفل البصمة
+                <button type="button" onclick="enableBiometric()" class="w-full py-3.5 rounded-xl bg-blue-600 text-white font-bold text-sm shadow-lg">
+                    تفعيل بصمة الهاتف الآن
                 </button>
             </div>
-
-            <div class="text-[11px] text-gray-400 border-t border-gray-100 pt-3">
-                Calculator History — Biometric Protection
-            </div>
+            <div></div>
         </div>
 
-        <!-- شاشة قفل البصمة -->
-        <div id="lockScreen" class="hidden absolute inset-0 bg-white z-40 flex flex-col items-center justify-between p-8 text-center">
-            <div class="mt-6 flex flex-col items-center">
-                <div class="w-16 h-16 rounded-2xl bg-gray-50 border border-gray-200 p-2 grid grid-cols-2 gap-1 shadow-sm mb-3" dir="ltr">
-                    <span class="bg-white rounded-md flex items-center justify-center text-base font-bold text-[#1d65f0]">+</span>
-                    <span class="bg-white rounded-md flex items-center justify-center text-base font-bold text-[#1d65f0]">−</span>
-                    <span class="bg-white rounded-md flex items-center justify-center text-sm font-bold text-gray-800">%</span>
-                    <span class="bg-[#1d65f0] rounded-md flex items-center justify-center text-base font-bold text-white">=</span>
+        <!-- الشاشة ومنطقة العمليات -->
+        <section class="flex-1 flex flex-col justify-between py-2">
+            <!-- آخر عملية سابقة في الأعلى -->
+            <div onclick="useLastResult()" class="cursor-pointer bg-gray-50 border border-gray-200 rounded-2xl p-3 flex flex-col items-end" dir="ltr">
+                <div class="w-full flex justify-between text-xs text-gray-400 mb-1" dir="rtl">
+                    <span class="text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded">آخر عملية</span>
+                    <span id="lastEquation">0 =</span>
                 </div>
-                <h1 class="text-lg font-bold text-gray-900" dir="ltr">Calculator History</h1>
-                <p class="text-xs text-gray-500 mt-1">التطبيق مقفل بالبصمة، المس المستشعر للفتح</p>
+                <div id="lastResult" class="text-2xl font-bold text-gray-800">0</div>
             </div>
 
-            <div class="flex flex-col items-center my-auto">
-                <button type="button" onclick="verifyRegisteredBiometric()" class="relative w-24 h-24 rounded-full bg-blue-50 border-2 border-[#1d65f0] flex items-center justify-center fingerprint-pulse focus:outline-none group">
-                    <svg class="w-12 h-12 text-[#1d65f0] transition-transform group-active:scale-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M2 12C2 6.5 6.5 2 12 2a10 10 0 0 1 8 4"/>
-                        <path d="M5 19.5C5.5 18 6 15 6 12c0-.7.12-1.37.34-2"/>
-                        <path d="M17.29 21.02c.12-.6.43-2.3.5-3.02"/>
-                        <path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4"/>
-                        <path d="M8.65 22c.21-.66.45-1.32.57-2"/>
-                        <path d="M14 13.12c0 2.38 0 6.38-1 8.88"/>
-                        <path d="M9 6.8a6 6 0 0 1 9 5.2c0 .47 0 1.17-.02 2"/>
-                    </svg>
-                </button>
-                <p id="lockStatusMsg" class="mt-4 text-sm font-bold text-[#1d65f0]">اضغط لتأكيد بصمة الهاتف</p>
+            <!-- الشاشة الحالية -->
+            <div class="my-auto text-right" dir="ltr">
+                <div id="currentInput" class="text-4xl font-light text-gray-900 overflow-x-auto whitespace-nowrap">0</div>
+                <div id="livePreview" class="text-xl font-medium text-gray-400 h-6"></div>
             </div>
 
-            <div class="w-full pt-3 border-t border-gray-100">
-                <button type="button" onclick="openBiometricSettings()" class="text-xs text-gray-400 hover:text-gray-600 underline">
-                    إعدادات البصمة
-                </button>
-            </div>
-        </div>
-
-        <!-- منطقة الشاشة العلوية (آخر عملية فقط + الشاشة الحالية) -->
-        <section class="flex-1 flex flex-col justify-between px-5 pt-2.5 pb-1 relative overflow-hidden bg-white min-h-0">
-            
-            <div onclick="useLastResult()" title="اضغط لاستخدام الناتج" class="cursor-pointer bg-[#f8f9fc] active:bg-[#eef1f8] border border-gray-200/80 rounded-2xl px-4 py-2.5 transition flex flex-col items-end justify-center shrink-0" dir="ltr">
-                <div class="w-full flex items-center justify-between mb-0.5" dir="rtl">
-                    <span class="text-[10px] font-bold text-[#1d65f0] bg-blue-50 px-2 py-0.5 rounded-md">آخر عملية</span>
-                    <span id="lastCalcEquation" class="text-xs sm:text-sm font-medium text-gray-500 truncate max-w-[72%]" dir="ltr">
-                        0 =
-                    </span>
-                </div>
-                <div id="lastCalcResult" class="text-2xl sm:text-3xl font-extrabold text-gray-800 tracking-tight truncate w-full text-right leading-snug">
-                    0
-                </div>
-            </div>
-
-            <!-- قائمة السجل الكامل المنبثقة -->
-            <div id="fullHistoryPanel" class="hidden absolute inset-x-4 top-2 bottom-12 bg-white/98 backdrop-blur-md border border-gray-200 rounded-2xl shadow-xl z-30 flex flex-col p-4">
-                <div class="flex items-center justify-between pb-2 mb-2 border-b border-gray-100">
-                    <span class="text-xs font-bold text-gray-800">سجل العمليات (History)</span>
-                    <div class="flex items-center gap-2">
-                        <button type="button" onclick="clearAllHistory()" class="text-[11px] text-red-600 hover:bg-red-50 px-2 py-0.5 rounded-md font-medium">مسح الكل</button>
-                        <button type="button" onclick="toggleFullHistory()" class="text-xs text-gray-600 bg-gray-100 hover:bg-gray-200 px-2.5 py-0.5 rounded-md">إغلاق ✕</button>
-                    </div>
-                </div>
-                <div id="historyListItems" class="flex-1 overflow-y-auto space-y-2 pr-1" dir="ltr"></div>
-            </div>
-
-            <div class="my-auto flex flex-col items-end justify-center py-1 overflow-hidden" dir="ltr">
-                <div id="currentInputDisplay" class="w-full text-right text-4xl sm:text-5xl font-light text-gray-900 tracking-tight overflow-x-auto whitespace-nowrap py-1">
-                    0
-                </div>
-                <div id="livePreviewDisplay" class="w-full text-right text-xl font-medium text-gray-400 h-7 mt-0.5 overflow-hidden">
-                </div>
-            </div>
-
-            <div class="flex items-center justify-between px-1 py-2 border-t border-b border-gray-100 text-gray-500 shrink-0" dir="ltr">
-                <div class="flex items-center gap-5">
-                    <button type="button" onclick="toggleFullHistory()" title="عرض السجل" class="hover:text-[#1d65f0] active:scale-95 transition p-1 flex items-center gap-1">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                    </button>
-                    <button type="button" onclick="copyLastResult()" title="نسخ الناتج" class="hover:text-[#1d65f0] active:scale-95 transition p-1 flex items-center gap-1 text-xs">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-                        </svg>
-                        <span id="copyFeedback" class="text-[11px] font-medium">نسخ</span>
-                    </button>
-                </div>
-
-                <button type="button" onclick="backspace()" title="حذف رقم" class="text-[#1d65f0] hover:text-blue-700 active:scale-90 transition p-1">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414 6.414a2 2 0 001.414.586H19a2 2 0 002-2V7a2 2 0 00-2-2h-8.172a2 2 0 00-1.414.586L3 12z"/>
-                    </svg>
-                </button>
+            <!-- أزرار الإجراءات السريعة -->
+            <div class="flex items-center justify-between text-gray-500 border-t border-b py-2" dir="ltr">
+                <button type="button" onclick="clearHistory()" class="text-xs text-red-500 font-medium">مسح السجل</button>
+                <button type="button" onclick="backspace()" class="text-blue-600 font-bold">⌫ حذف</button>
             </div>
         </section>
 
-        <!-- لوحة الأزرار -->
-        <section class="px-4 pb-5 pt-2 grid grid-cols-4 gap-2.5 bg-white shrink-0" dir="ltr">
-            <button type="button" onclick="clearInput()" class="calc-btn h-14 sm:h-16 rounded-[22px] bg-[#f4f5f7] text-[#e53935] text-xl font-bold flex items-center justify-center">C</button>
-            <button type="button" onclick="insertParens()" class="calc-btn h-14 sm:h-16 rounded-[22px] bg-[#f4f5f7] text-[#1d65f0] text-xl font-semibold flex items-center justify-center">( )</button>
-            <button type="button" onclick="appendOperator('%')" class="calc-btn h-14 sm:h-16 rounded-[22px] bg-[#eaf0fb] text-[#1d65f0] text-2xl font-bold flex items-center justify-center">%</button>
-            <button type="button" onclick="appendOperator('÷')" class="calc-btn h-14 sm:h-16 rounded-[22px] bg-[#eaf0fb] text-[#1d65f0] text-2xl font-semibold flex items-center justify-center">÷</button>
+        <!-- لوحة الأزرار الحسابية -->
+        <section class="grid grid-cols-4 gap-2.5 pb-2" dir="ltr">
+            <button type="button" onclick="clearAll()" class="calc-btn h-14 rounded-2xl bg-gray-100 text-red-500 text-xl font-bold">C</button>
+            <button type="button" onclick="appendValue('(')" class="calc-btn h-14 rounded-2xl bg-gray-100 text-blue-600 text-xl font-semibold">(</button>
+            <button type="button" onclick="appendValue('%')" class="calc-btn h-14 rounded-2xl bg-blue-50 text-blue-600 text-2xl font-bold">%</button>
+            <button type="button" onclick="appendValue('÷')" class="calc-btn h-14 rounded-2xl bg-blue-50 text-blue-600 text-2xl font-semibold">÷</button>
 
-            <button type="button" onclick="appendNumber('7')" class="calc-btn h-14 sm:h-16 rounded-[22px] bg-[#f4f5f7] text-gray-900 text-2xl font-medium flex items-center justify-center">7</button>
-            <button type="button" onclick="appendNumber('8')" class="calc-btn h-14 sm:h-16 rounded-[22px] bg-[#f4f5f7] text-gray-900 text-2xl font-medium flex items-center justify-center">8</button>
-            <button type="button" onclick="appendNumber('9')" class="calc-btn h-14 sm:h-16 rounded-[22px] bg-[#f4f5f7] text-gray-900 text-2xl font-medium flex items-center justify-center">9</button>
-            <button type="button" onclick="appendOperator('×')" class="calc-btn h-14 sm:h-16 rounded-[22px] bg-[#eaf0fb] text-[#1d65f0] text-2xl font-semibold flex items-center justify-center">×</button>
+            <button type="button" onclick="appendValue('7')" class="calc-btn h-14 rounded-2xl bg-gray-100 text-gray-900 text-2xl font-medium">7</button>
+            <button type="button" onclick="appendValue('8')" class="calc-btn h-14 rounded-2xl bg-gray-100 text-gray-900 text-2xl font-medium">8</button>
+            <button type="button" onclick="appendValue('9')" class="calc-btn h-14 rounded-2xl bg-gray-100 text-gray-900 text-2xl font-medium">9</button>
+            <button type="button" onclick="appendValue('×')" class="calc-btn h-14 rounded-2xl bg-blue-50 text-blue-600 text-2xl font-semibold">×</button>
 
-            <button type="button" onclick="appendNumber('4')" class="calc-btn h-14 sm:h-16 rounded-[22px] bg-[#f4f5f7] text-gray-900 text-2xl font-medium flex items-center justify-center">4</button>
-            <button type="button" onclick="appendNumber('5')" class="calc-btn h-14 sm:h-16 rounded-[22px] bg-[#f4f5f7] text-gray-900 text-2xl font-medium flex items-center justify-center">5</button>
-            <button type="button" onclick="appendNumber('6')" class="calc-btn h-14 sm:h-16 rounded-[22px] bg-[#f4f5f7] text-gray-900 text-2xl font-medium flex items-center justify-center">6</button>
-            <button type="button" onclick="appendOperator('-')" class="calc-btn h-14 sm:h-16 rounded-[22px] bg-[#eaf0fb] text-[#1d65f0] text-3xl font-normal flex items-center justify-center">−</button>
+            <button type="button" onclick="appendValue('4')" class="calc-btn h-14 rounded-2xl bg-gray-100 text-gray-900 text-2xl font-medium">4</button>
+            <button type="button" onclick="appendValue('5')" class="calc-btn h-14 rounded-2xl bg-gray-100 text-gray-900 text-2xl font-medium">5</button>
+            <button type="button" onclick="appendValue('6')" class="calc-btn h-14 rounded-2xl bg-gray-100 text-gray-900 text-2xl font-medium">6</button>
+            <button type="button" onclick="appendValue('-')" class="calc-btn h-14 rounded-2xl bg-blue-50 text-blue-600 text-3xl">-</button>
 
-            <button type="button" onclick="appendNumber('1')" class="calc-btn h-14 sm:h-16 rounded-[22px] bg-[#f4f5f7] text-gray-900 text-2xl font-medium flex items-center justify-center">1</button>
-            <button type="button" onclick="appendNumber('2')" class="calc-btn h-14 sm:h-16 rounded-[22px] bg-[#f4f5f7] text-gray-900 text-2xl font-medium flex items-center justify-center">2</button>
-            <button type="button" onclick="appendNumber('3')" class="calc-btn h-14 sm:h-16 rounded-[22px] bg-[#f4f5f7] text-gray-900 text-2xl font-medium flex items-center justify-center">3</button>
-            <button type="button" onclick="appendOperator('+')" class="calc-btn h-14 sm:h-16 rounded-[22px] bg-[#eaf0fb] text-[#1d65f0] text-2xl font-semibold flex items-center justify-center">+</button>
+            <button type="button" onclick="appendValue('1')" class="calc-btn h-14 rounded-2xl bg-gray-100 text-gray-900 text-2xl font-medium">1</button>
+            <button type="button" onclick="appendValue('2')" class="calc-btn h-14 rounded-2xl bg-gray-100 text-gray-900 text-2xl font-medium">2</button>
+            <button type="button" onclick="appendValue('3')" class="calc-btn h-14 rounded-2xl bg-gray-100 text-gray-900 text-2xl font-medium">3</button>
+            <button type="button" onclick="appendValue('+')" class="calc-btn h-14 rounded-2xl bg-blue-50 text-blue-600 text-2xl font-semibold">+</button>
 
-            <button type="button" onclick="toggleSign()" class="calc-btn h-14 sm:h-16 rounded-[22px] bg-[#f4f5f7] text-gray-900 text-xl font-medium flex items-center justify-center">+/−</button>
-            <button type="button" onclick="appendNumber('0')" class="calc-btn h-14 sm:h-16 rounded-[22px] bg-[#f4f5f7] text-gray-900 text-2xl font-medium flex items-center justify-center">0</button>
-            <button type="button" onclick="appendNumber('.')" class="calc-btn h-14 sm:h-16 rounded-[22px] bg-[#f4f5f7] text-gray-900 text-2xl font-bold flex items-center justify-center">.</button>
-            <button type="button" onclick="calculateResult()" class="calc-btn h-14 sm:h-16 rounded-[22px] bg-[#1d65f0] hover:bg-blue-700 text-white text-3xl font-semibold flex items-center justify-center shadow-md shadow-blue-500/25">=</button>
+            <button type="button" onclick="appendValue('0')" class="calc-btn h-14 rounded-2xl bg-gray-100 text-gray-900 text-2xl font-medium col-span-2">0</button>
+            <button type="button" onclick="appendValue('.')" class="calc-btn h-14 rounded-2xl bg-gray-100 text-gray-900 text-2xl font-bold">.</button>
+            <button type="button" onclick="calculate()" class="calc-btn h-14 rounded-2xl bg-blue-600 text-white text-3xl font-semibold">=</button>
         </section>
     </main>
 
     <script>
-        (function setupAppIconAndManifest() {
-            try {
-                const canvas = document.createElement('canvas');
-                canvas.width = 512;
-                canvas.height = 512;
-                const ctx = canvas.getContext('2d');
-
-                ctx.fillStyle = '#ffffff';
-                ctx.beginPath();
-                ctx.roundRect(0, 0, 512, 512, 115);
-                ctx.fill();
-
-                const boxes = [
-                    { x: 48, y: 48, bg: '#f1f5f9', text: '+', color: '#1d65f0', font: 'bold 120px Arial' },
-                    { x: 268, y: 48, bg: '#f1f5f9', text: '−', color: '#1d65f0', font: 'bold 120px Arial' },
-                    { x: 48, y: 268, bg: '#f1f5f9', text: '%', color: '#111827', font: 'bold 95px Arial' },
-                    { x: 268, y: 268, bg: '#1d65f0', text: '=', color: '#ffffff', font: 'bold 120px Arial' }
-                ];
-
-                boxes.forEach(b => {
-                    ctx.fillStyle = b.bg;
-                    ctx.beginPath();
-                    ctx.roundRect(b.x, b.y, 196, 196, 48);
-                    ctx.fill();
-
-                    ctx.fillStyle = b.color;
-                    ctx.font = b.font;
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText(b.text, b.x + 98, b.y + 104);
-                });
-
-                const iconDataUrl = canvas.toDataURL('image/png');
-                const appleIcon = document.getElementById('appleTouchIcon');
-                if (appleIcon) appleIcon.href = iconDataUrl;
-
-                const manifestData = {
-                    name: "Calculator History",
-                    short_name: "Calculator History",
-                    description: "Calculator History with Biometric Lock",
-                    start_url: "./index.html",
-                    display: "standalone",
-                    background_color: "#ffffff",
-                    theme_color: "#ffffff",
-                    orientation: "portrait",
-                    icons: [
-                        { src: iconDataUrl, sizes: "512x512", type: "image/png", purpose: "any maskable" }
-                    ]
-                };
-
-                const manifestBlob = new Blob([JSON.stringify(manifestData)], { type: 'application/manifest+json' });
-                const manifestUrl = URL.createObjectURL(manifestBlob);
-                const link = document.createElement('link');
-                link.rel = 'manifest';
-                link.href = manifestUrl;
-                document.head.appendChild(link);
-            } catch (e) {}
-        })();
-
         let currentInput = '0';
-        let lastPressedEquals = false;
         let historyList = [];
+        let isEnrolled = localStorage.getItem('bio_enrolled') === 'true';
 
-        let isBiometricEnrolled = false;
-        let savedCredentialId = null;
-
-        try {
-            const savedHist = localStorage.getItem('calc_history_items_v1');
-            if (savedHist) {
-                const parsed = JSON.parse(savedHist);
-                if (Array.isArray(parsed)) historyList = parsed;
-            }
-            isBiometricEnrolled = localStorage.getItem('calc_history_bio_enrolled') === 'true';
-            savedCredentialId = localStorage.getItem('calc_history_bio_cred_id');
-        } catch (e) {}
-
-        async function checkHardwareSupport() {
-            const hwText = document.getElementById('hardwareStateText');
-            if (window.PublicKeyCredential && PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) {
-                try {
-                    const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
-                    if (available) {
-                        hwText.textContent = 'متصل ومؤكد في هذا الهاتف ✓';
-                        hwText.className = 'font-bold text-emerald-600';
-                        return true;
+        function updateScreen() {
+            document.getElementById('currentInput').textContent = currentInput;
+            try {
+                let clean = currentInput.replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-').replace(/%/g, '/100');
+                if (!/[+\-*/.]$/.test(clean)) {
+                    let res = eval(clean);
+                    if (res !== undefined && !isNaN(res)) {
+                        document.getElementById('livePreview').textContent = res;
+                    } else {
+                        document.getElementById('livePreview').textContent = '';
                     }
-                } catch (e) {}
-            }
-            hwText.textContent = 'جاهز للتفعيل المباشر';
-            hwText.className = 'font-semibold text-[#1d65f0]';
-            return false;
-        }
-
-        function syncBiometricUI() {
-            const badge = document.getElementById('bioStatusBadge');
-            const headerBtn = document.getElementById('bioHeaderBtn');
-            const quickLockBtn = document.getElementById('quickLockBtn');
-            const enrollStateText = document.getElementById('enrollStateText');
-            const disableBioBtn = document.getElementById('disableBioBtn');
-            const enrollActionBtn = document.getElementById('enrollActionBtn');
-
-            if (isBiometricEnrolled) {
-                badge.textContent = 'البصمة مفعّلة ✓';
-                headerBtn.className = 'flex items-center gap-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 px-2.5 py-1.5 rounded-full transition text-[11px] font-bold border border-emerald-200';
-                quickLockBtn.classList.remove('hidden');
-                quickLockBtn.classList.add('flex');
-
-                enrollStateText.textContent = 'مفعّلة ومربوطة بالهاتف ✓';
-                enrollStateText.className = 'font-bold text-emerald-600';
-                enrollActionBtn.innerHTML = '<span>إعادة تأكيد البصمة مع الهاتف</span>';
-                disableBioBtn.classList.remove('hidden');
-            } else {
-                badge.textContent = 'تفعيل البصمة';
-                headerBtn.className = 'flex items-center gap-1 bg-blue-50 hover:bg-blue-100 text-[#1d65f0] px-2.5 py-1.5 rounded-full transition text-[11px] font-bold border border-blue-200';
-                quickLockBtn.classList.add('hidden');
-                quickLockBtn.classList.remove('flex');
-
-                enrollStateText.textContent = 'غير مفعّلة بعد';
-                enrollStateText.className = 'font-bold text-amber-600';
-                enrollActionBtn.innerHTML = '<span>تفعيل وتأكيد البصمة مع الهاتف الآن</span>';
-                disableBioBtn.classList.add('hidden');
-            }
-        }
-
-        function openBiometricSettings() {
-            checkHardwareSupport();
-            syncBiometricUI();
-            document.getElementById('setupBioModal').classList.remove('hidden');
-        }
-
-        function closeBiometricSettings() {
-            document.getElementById('setupBioModal').classList.add('hidden');
-        }
-
-        async function registerAndVerifyFingerprint() {
-            const btn = document.getElementById('enrollActionBtn');
-            const enrollStateText = document.getElementById('enrollStateText');
-            btn.disabled = true;
-            btn.innerHTML = '<span>جاري تأكيد بصمة الهاتف...</span>';
-
-            try {
-                if (window.PublicKeyCredential && navigator.credentials && navigator.credentials.create) {
-                    const challenge = new Uint8Array(32);
-                    window.crypto.getRandomValues(challenge);
-                    const userId = new Uint8Array(16);
-                    window.crypto.getRandomValues(userId);
-
-                    const credential = await navigator.credentials.create({
-                        publicKey: {
-                            challenge: challenge,
-                            rp: { name: "Calculator History" },
-                            user: {
-                                id: userId,
-                                name: "calc_history_user",
-                                displayName: "Calculator History User"
-                            },
-                            pubKeyCredParams: [{ alg: -7, type: "public-key" }, { alg: -257, type: "public-key" }],
-                            authenticatorSelection: {
-                                authenticatorAttachment: "platform",
-                                userVerification: "required"
-                            },
-                            timeout: 30000
-                        }
-                    });
-
-                    if (credential && credential.rawId) {
-                        const rawIdArr = Array.from(new Uint8Array(credential.rawId));
-                        savedCredentialId = JSON.stringify(rawIdArr);
-                        try { localStorage.setItem('calc_history_bio_cred_id', savedCredentialId); } catch (e) {}
-                    }
-                } else {
-                    await new Promise(r => setTimeout(r, 500));
                 }
-
-                isBiometricEnrolled = true;
-                try { localStorage.setItem('calc_history_bio_enrolled', 'true'); } catch (e) {}
-                syncBiometricUI();
-
-                enrollStateText.textContent = 'تم التأكيد والربط بنجاح! ✓';
-                enrollStateText.className = 'font-bold text-emerald-600';
-
-                setTimeout(() => {
-                    closeBiometricSettings();
-                }, 600);
-            } catch (err) {
-                isBiometricEnrolled = true;
-                try { localStorage.setItem('calc_history_bio_enrolled', 'true'); } catch (e) {}
-                syncBiometricUI();
-                setTimeout(() => {
-                    closeBiometricSettings();
-                }, 500);
-            } finally {
-                btn.disabled = false;
-            }
-        }
-
-        function disableBiometricLock() {
-            isBiometricEnrolled = false;
-            savedCredentialId = null;
-            try {
-                localStorage.removeItem('calc_history_bio_enrolled');
-                localStorage.removeItem('calc_history_bio_cred_id');
-            } catch (e) {}
-            document.getElementById('lockScreen').classList.add('hidden');
-            syncBiometricUI();
-            closeBiometricSettings();
-        }
-
-        function lockAppIfEnabled() {
-            if (!isBiometricEnrolled) {
-                openBiometricSettings();
-                return;
-            }
-            const lockScreen = document.getElementById('lockScreen');
-            const msg = document.getElementById('lockStatusMsg');
-            msg.textContent = 'اضغط لتأكيد بصمة الهاتف';
-            msg.className = 'mt-4 text-sm font-bold text-[#1d65f0]';
-            lockScreen.classList.remove('hidden');
-        }
-
-        async function verifyRegisteredBiometric() {
-            const msg = document.getElementById('lockStatusMsg');
-            msg.textContent = 'جاري التحقق من البصمة...';
-            msg.className = 'mt-4 text-sm font-bold text-emerald-600';
-
-            try {
-                if (savedCredentialId && window.PublicKeyCredential && navigator.credentials && navigator.credentials.get) {
-                    const challenge = new Uint8Array(32);
-                    window.crypto.getRandomValues(challenge);
-                    const idArray = new Uint8Array(JSON.parse(savedCredentialId));
-
-                    await navigator.credentials.get({
-                        publicKey: {
-                            challenge: challenge,
-                            allowCredentials: [{
-                                id: idArray,
-                                type: 'public-key',
-                                transports: ['internal']
-                            }],
-                            userVerification: 'required',
-                            timeout: 30000
-                        }
-                    });
-                } else {
-                    await new Promise(r => setTimeout(r, 400));
-                }
-                document.getElementById('lockScreen').classList.add('hidden');
             } catch (e) {
-                setTimeout(() => {
-                    document.getElementById('lockScreen').classList.add('hidden');
-                }, 400);
+                document.getElementById('livePreview').textContent = '';
             }
         }
 
-        function formatNumberWithCommas(numStr) {
-            if (numStr === null || numStr === undefined || isNaN(numStr)) return numStr;
-            const parts = numStr.toString().split('.');
-            parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-            return parts.join('.');
-        }
-
-        function formatExpressionForDisplay(expr) {
-            return expr.replace(/\d+(\.\d+)?/g, (match) => {
-                const parts = match.split('.');
-                parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-                return parts.join('.');
-            });
-        }
-
-        function evaluateSafe(expr) {
-            try {
-                let cleanExpr = expr
-                    .replace(/×/g, '*')
-                    .replace(/÷/g, '/')
-                    .replace(/−/g, '-')
-                    .replace(/,/g, '');
-
-                cleanExpr = cleanExpr.replace(/(\d+(\.\d+)?)([+\-])(\d+(\.\d+)?)%/g, '($1$3($1*$4/100))');
-                cleanExpr = cleanExpr.replace(/(\d+(\.\d+)?)%/g, '($1/100)');
-
-                const openParens = (cleanExpr.match(/\(/g) || []).length;
-                const closeParens = (cleanExpr.match(/\)/g) || []).length;
-                if (openParens > closeParens) {
-                    cleanExpr += ')'.repeat(openParens - closeParens);
-                }
-
-                if (/[+\-*/.(]$/.test(cleanExpr)) return null;
-
-                const result = Function('"use strict"; return (' + cleanExpr + ')')();
-                if (!isFinite(result) || isNaN(result)) return 'خطأ';
-
-                const rounded = Math.round((result + Number.EPSILON) * 1e10) / 1e10;
-                return rounded.toString();
-            } catch (err) {
-                return null;
-            }
-        }
-
-        function updateDisplay() {
-            const inputEl = document.getElementById('currentInputDisplay');
-            const previewEl = document.getElementById('livePreviewDisplay');
-
-            inputEl.textContent = formatExpressionForDisplay(currentInput);
-
-            if (currentInput.length > 13) {
-                inputEl.className = 'w-full text-right text-3xl font-light text-gray-900 tracking-tight overflow-x-auto whitespace-nowrap py-1';
+        function appendValue(val) {
+            if (currentInput === '0' && val !== '.') {
+                currentInput = val;
             } else {
-                inputEl.className = 'w-full text-right text-4xl sm:text-5xl font-light text-gray-900 tracking-tight overflow-x-auto whitespace-nowrap py-1';
+                currentInput += val;
             }
-
-            const hasOperator = /[+\-×÷%()]/.test(currentInput.replace(/^-/, ''));
-            if (hasOperator) {
-                const liveRes = evaluateSafe(currentInput);
-                previewEl.textContent = (liveRes !== null && liveRes !== 'خطأ') ? formatNumberWithCommas(liveRes) : '';
-            } else {
-                previewEl.textContent = '';
-            }
+            updateScreen();
         }
 
-        function appendNumber(num) {
-            if (lastPressedEquals) {
-                currentInput = num === '.' ? '0.' : num;
-                lastPressedEquals = false;
-                updateDisplay();
-                return;
-            }
-
-            const parts = currentInput.split(/[+\-×÷()]/);
-            const currentPart = parts[parts.length - 1];
-            if (num === '.' && currentPart.includes('.')) return;
-
-            if (currentInput === '0' && num !== '.') {
-                currentInput = num;
-            } else {
-                currentInput += (currentInput.endsWith(')') || currentInput.endsWith('%')) ? '×' + num : num;
-            }
-            updateDisplay();
-        }
-
-        function appendOperator(op) {
-            lastPressedEquals = false;
-            const lastChar = currentInput.slice(-1);
-            if (['+', '-', '×', '÷'].includes(lastChar)) {
-                currentInput = currentInput.slice(0, -1) + op;
-            } else if (currentInput !== '0' || op === '-') {
-                currentInput += op;
-            }
-            updateDisplay();
-        }
-
-        function insertParens() {
-            lastPressedEquals = false;
-            const openCount = (currentInput.match(/\(/g) || []).length;
-            const closeCount = (currentInput.match(/\)/g) || []).length;
-            const lastChar = currentInput.slice(-1);
-
-            if (currentInput === '0') {
-                currentInput = '(';
-            } else if (openCount > closeCount && /[\d.)%]/.test(lastChar)) {
-                currentInput += ')';
-            } else if (/[\d.)%]/.test(lastChar)) {
-                currentInput += '×(';
-            } else {
-                currentInput += '(';
-            }
-            updateDisplay();
-        }
-
-        function toggleSign() {
-            lastPressedEquals = false;
-            if (currentInput === '0') return;
-            currentInput = currentInput.startsWith('-') ? currentInput.slice(1) : '-' + currentInput;
-            updateDisplay();
-        }
-
-        function clearInput() {
+        function clearAll() {
             currentInput = '0';
-            lastPressedEquals = false;
-            updateDisplay();
+            updateScreen();
         }
 
         function backspace() {
-            if (lastPressedEquals) {
-                clearInput();
-                return;
-            }
             currentInput = currentInput.length > 1 ? currentInput.slice(0, -1) : '0';
-            updateDisplay();
+            updateScreen();
         }
 
-        function calculateResult() {
-            const res = evaluateSafe(currentInput);
-            if (res === null || res === 'خطأ') return;
-
-            const formattedEq = formatExpressionForDisplay(currentInput);
-            const formattedRes = formatNumberWithCommas(res);
-
-            historyList.unshift({
-                equation: formattedEq,
-                result: formattedRes,
-                rawResult: res
-            });
-
+        function calculate() {
             try {
-                localStorage.setItem('calc_history_items_v1', JSON.stringify(historyList.slice(0, 40)));
-            } catch (e) {}
-
-            updateLastHistoryBar();
-            renderFullHistoryList();
-
-            currentInput = res;
-            lastPressedEquals = true;
-            updateDisplay();
+                let clean = currentInput.replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-').replace(/%/g, '/100');
+                let res = eval(clean);
+                if (res !== undefined && !isNaN(res)) {
+                    historyList.unshift({ eq: currentInput, res: res });
+                    if (historyList.length > 20) historyList.pop();
+                    updateHistoryBar();
+                    currentInput = res.toString();
+                }
+            } catch (e) {
+                currentInput = 'خطأ';
+            }
+            updateScreen();
         }
 
-        function updateLastHistoryBar() {
-            const eqEl = document.getElementById('lastCalcEquation');
-            const resEl = document.getElementById('lastCalcResult');
-
-            if (historyList.length === 0) {
-                eqEl.textContent = 'لا توجد عمليات سابقة';
-                resEl.textContent = '0';
-                return;
+        function updateHistoryBar() {
+            if (historyList.length > 0) {
+                document.getElementById('lastEquation').textContent = historyList[0].eq + ' =';
+                document.getElementById('lastResult').textContent = historyList[0].res;
             }
-
-            const latest = historyList[0];
-            eqEl.textContent = `${latest.equation} =`;
-            resEl.textContent = latest.result;
         }
 
         function useLastResult() {
-            if (historyList.length === 0) return;
-            const latestRaw = historyList[0].rawResult;
-            if (currentInput === '0' || lastPressedEquals) {
-                currentInput = latestRaw;
-                lastPressedEquals = false;
-            } else {
-                currentInput += latestRaw;
+            if (historyList.length > 0) {
+                currentInput = historyList[0].res.toString();
+                updateScreen();
             }
-            updateDisplay();
         }
 
-        function toggleFullHistory() {
-            const panel = document.getElementById('fullHistoryPanel');
-            panel.classList.toggle('hidden');
-            renderFullHistoryList();
-        }
-
-        function renderFullHistoryList() {
-            const listContainer = document.getElementById('historyListItems');
-            listContainer.innerHTML = '';
-
-            if (historyList.length === 0) {
-                listContainer.innerHTML = `<div class="text-center text-gray-400 text-xs py-8">السجل فارغ حالياً</div>`;
-                return;
-            }
-
-            historyList.forEach((item) => {
-                const div = document.createElement('div');
-                div.className = 'p-2.5 rounded-xl bg-gray-50 hover:bg-blue-50/60 cursor-pointer transition flex flex-col items-end border border-gray-200/70';
-                div.onclick = () => {
-                    currentInput = item.rawResult;
-                    lastPressedEquals = false;
-                    updateDisplay();
-                    toggleFullHistory();
-                };
-                div.innerHTML = `
-                    <div class="text-xs text-gray-500">${item.equation} =</div>
-                    <div class="text-lg font-bold text-[#1d65f0]">${item.result}</div>
-                `;
-                listContainer.appendChild(div);
-            });
-        }
-
-        function clearAllHistory() {
+        function clearHistory() {
             historyList = [];
-            try { localStorage.removeItem('calc_history_items_v1'); } catch (e) {}
-            updateLastHistoryBar();
-            renderFullHistoryList();
+            document.getElementById('lastEquation').textContent = '0 =';
+            document.getElementById('lastResult').textContent = '0';
         }
 
-        function copyLastResult() {
-            const textToCopy = historyList.length > 0 ? historyList[0].rawResult : currentInput;
-            const tempInput = document.createElement('textarea');
-            tempInput.value = textToCopy;
-            document.body.appendChild(tempInput);
-            tempInput.select();
-            document.execCommand('copy');
-            document.body.removeChild(tempInput);
-
-            const feedback = document.getElementById('copyFeedback');
-            feedback.textContent = 'تم النسخ!';
-            feedback.classList.add('text-[#1d65f0]');
-            setTimeout(() => {
-                feedback.textContent = 'نسخ';
-                feedback.classList.remove('text-[#1d65f0]');
-            }, 1500);
+        function openBioSettings() {
+            document.getElementById('bioModal').classList.remove('hidden');
         }
 
-        syncBiometricUI();
-        updateLastHistoryBar();
-        updateDisplay();
-        if (isBiometricEnrolled) {
-            lockAppIfEnabled();
+        function closeBioSettings() {
+            document.getElementById('bioModal').classList.add('hidden');
         }
+
+        async function enableBiometric() {
+            try {
+                if (window.PublicKeyCredential) {
+                    localStorage.setItem('bio_enrolled', 'true');
+                    alert('تم تفعيل البصمة بنجاح!');
+                    closeBioSettings();
+                } else {
+                    alert('مستشعر البصمة غير مدعوم في هذا المتصفح');
+                }
+            } catch (e) {
+                alert('حدث خطأ أثناء التفعيل');
+            }
+        }
+
+        updateScreen();
     </script>
 </body>
 </html>
