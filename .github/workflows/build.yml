@@ -1,0 +1,625 @@
+name: Build Calculator APK
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Install SDK parts and fonts
+        run: |
+          SDKM="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKM" --licenses > /dev/null || true
+          "$SDKM" "platforms;android-34" "build-tools;34.0.0"
+          pip install pillow
+
+      - name: Generate the Android project
+        run: |
+          mkdir -p build_project/app/src/main/java/com/alekhwa/calc
+          mkdir -p build_project/app/src/main/res/values
+          mkdir -p build_project/app/src/main/res/mipmap-xxxhdpi
+          cd build_project
+
+          cat > settings.gradle <<'EOF'
+          pluginManagement {
+              repositories {
+                  google()
+                  mavenCentral()
+                  gradlePluginPortal()
+              }
+          }
+          dependencyResolutionManagement {
+              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+          }
+          rootProject.name = "Calculator"
+          include ':app'
+          EOF
+
+          cat > build.gradle <<'EOF'
+          plugins {
+              id 'com.android.application' version '8.5.2' apply false
+          }
+          EOF
+
+          cat > gradle.properties <<'EOF'
+          org.gradle.jvmargs=-Xmx2g
+          android.nonTransitiveRClass=true
+          EOF
+
+          cat > app/build.gradle <<'EOF'
+          plugins {
+              id 'com.android.application'
+          }
+          android {
+              namespace 'com.alekhwa.calc'
+              compileSdk 34
+              defaultConfig {
+                  applicationId "com.alekhwa.calc"
+                  minSdk 28
+                  targetSdk 34
+                  versionCode 1
+                  versionName "1.0"
+              }
+              compileOptions {
+                  sourceCompatibility JavaVersion.VERSION_17
+                  targetCompatibility JavaVersion.VERSION_17
+              }
+          }
+          EOF
+
+          cat > app/src/main/AndroidManifest.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+              <uses-permission android:name="android.permission.USE_BIOMETRIC" />
+              <application
+                  android:label="@string/app_name"
+                  android:icon="@mipmap/ic_launcher"
+                  android:roundIcon="@mipmap/ic_launcher"
+                  android:allowBackup="false"
+                  android:theme="@android:style/Theme.Material.Light.NoActionBar">
+                  <activity
+                      android:name=".MainActivity"
+                      android:exported="true"
+                      android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|smallestScreenSize">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN" />
+                          <category android:name="android.intent.category.LAUNCHER" />
+                      </intent-filter>
+                  </activity>
+              </application>
+          </manifest>
+          EOF
+
+          cat > app/src/main/res/values/strings.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <string name="app_name">Calculator</string>
+          </resources>
+          EOF
+
+          cat > app/src/main/java/com/alekhwa/calc/Calc.java <<'EOF'
+          package com.alekhwa.calc;
+
+          import java.math.BigDecimal;
+          import java.math.MathContext;
+
+          public final class Calc {
+              private final String s;
+              private int i = 0;
+
+              private Calc(String src) {
+                  s = src.replace("÷", "/").replace("×", "*").replace("−", "-")
+                         .replace("π", "pi").replace("√", "sqrt").replace(" ", "");
+              }
+
+              public static double eval(String src) {
+                  Calc p = new Calc(src);
+                  if (p.s.isEmpty()) throw new IllegalArgumentException("empty");
+                  double v = p.expr();
+                  if (p.i != p.s.length()) throw new IllegalArgumentException("trailing");
+                  if (Double.isNaN(v) || Double.isInfinite(v)) throw new ArithmeticException("bad");
+                  return v;
+              }
+
+              public static String format(double v) {
+                  if (Double.isNaN(v) || Double.isInfinite(v)) throw new ArithmeticException("bad");
+                  BigDecimal bd = BigDecimal.valueOf(v).round(new MathContext(12)).stripTrailingZeros();
+                  return bd.toPlainString();
+              }
+
+              private double expr() {
+                  double v = term();
+                  while (i < s.length()) {
+                      char c = s.charAt(i);
+                      if (c == '+') { i++; v += term(); }
+                      else if (c == '-') { i++; v -= term(); }
+                      else break;
+                  }
+                  return v;
+              }
+
+              private double term() {
+                  double v = unary();
+                  while (i < s.length()) {
+                      char c = s.charAt(i);
+                      if (c == '*') { i++; v *= unary(); }
+                      else if (c == '/') {
+                          i++;
+                          double d = unary();
+                          if (d == 0) throw new ArithmeticException("div0");
+                          v /= d;
+                      }
+                      else if (Character.isLetter(c) || c == '(') { v *= unary(); }
+                      else break;
+                  }
+                  return v;
+              }
+
+              private double unary() {
+                  if (i < s.length()) {
+                      char c = s.charAt(i);
+                      if (c == '-') { i++; return -unary(); }
+                      if (c == '+') { i++; return unary(); }
+                  }
+                  return power();
+              }
+
+              private double power() {
+                  double b = postfix();
+                  if (i < s.length() && s.charAt(i) == '^') {
+                      i++;
+                      return Math.pow(b, unary());
+                  }
+                  return b;
+              }
+
+              private double postfix() {
+                  double v = primary();
+                  while (i < s.length() && s.charAt(i) == '%') { i++; v /= 100; }
+                  return v;
+              }
+
+              private double primary() {
+                  if (i >= s.length()) throw new IllegalArgumentException("end");
+                  char c = s.charAt(i);
+                  if (c == '(') {
+                      i++;
+                      double v = expr();
+                      expect(')');
+                      return v;
+                  }
+                  if (Character.isDigit(c) || c == '.') {
+                      int st = i;
+                      while (i < s.length() && (Character.isDigit(s.charAt(i)) || s.charAt(i) == '.')) i++;
+                      return Double.parseDouble(s.substring(st, i));
+                  }
+                  if (Character.isLetter(c)) {
+                      int st = i;
+                      while (i < s.length() && Character.isLetter(s.charAt(i))) i++;
+                      String name = s.substring(st, i);
+                      if (name.equals("pi")) return Math.PI;
+                      if (i < s.length() && s.charAt(i) == '(') {
+                          i++;
+                          double v = expr();
+                          expect(')');
+                          switch (name) {
+                              case "sin": return Math.sin(Math.toRadians(v));
+                              case "cos": return Math.cos(Math.toRadians(v));
+                              case "tan": return Math.tan(Math.toRadians(v));
+                              case "log": return Math.log10(v);
+                              case "ln": return Math.log(v);
+                              case "sqrt": return Math.sqrt(v);
+                              default: break;
+                          }
+                      }
+                  }
+                  throw new IllegalArgumentException("syntax");
+              }
+
+              private void expect(char c) {
+                  if (i < s.length() && s.charAt(i) == c) i++;
+                  else throw new IllegalArgumentException("expected " + c);
+              }
+          }
+          EOF
+
+          cat > app/src/main/java/com/alekhwa/calc/MainActivity.java <<'EOF'
+          package com.alekhwa.calc;
+
+          import android.app.Activity;
+          import android.content.res.Configuration;
+          import android.graphics.Typeface;
+          import android.hardware.biometrics.BiometricPrompt;
+          import android.os.Bundle;
+          import android.os.CancellationSignal;
+          import android.text.TextUtils;
+          import android.util.TypedValue;
+          import android.view.Gravity;
+          import android.view.View;
+          import android.view.Window;
+          import android.widget.Button;
+          import android.widget.FrameLayout;
+          import android.widget.LinearLayout;
+          import android.widget.ScrollView;
+          import android.widget.TextView;
+          import java.util.concurrent.Executor;
+
+          public class MainActivity extends Activity {
+
+              private static final int BG = 0xFFF2F2F7;
+              private static final int WHITE = 0xFFFFFFFF;
+              private static final int GRAY = 0xFFD1D1D6;
+              private static final int ORANGE = 0xFFFF9500;
+              private static final int DARK = 0xFF000000;
+              private static final int SOFT = 0xFF8E8E93;
+              private static final int MATCH = LinearLayout.LayoutParams.MATCH_PARENT;
+              private static final int WRAP = LinearLayout.LayoutParams.WRAP_CONTENT;
+
+              private LinearLayout content, historyBox, sciPanel, lockView;
+              private ScrollView historyScroll;
+              private TextView exprView, resultView, lockText;
+              private String expr = "";
+              private String lastExpr = "";
+              private String lastResult = "0";
+              private boolean justEvaluated = false;
+              private boolean locked = true;
+              private boolean authenticating = false;
+              private CancellationSignal cancelSignal;
+
+              @Override
+              protected void onCreate(Bundle savedInstanceState) {
+                  super.onCreate(savedInstanceState);
+                  Window w = getWindow();
+                  w.setStatusBarColor(BG);
+                  w.setNavigationBarColor(BG);
+
+                  FrameLayout frame = new FrameLayout(this);
+                  content = buildCalculator();
+                  lockView = buildLockView();
+                  frame.addView(content, new FrameLayout.LayoutParams(MATCH, MATCH));
+                  frame.addView(lockView, new FrameLayout.LayoutParams(MATCH, MATCH));
+                  setContentView(frame);
+
+                  content.setVisibility(View.INVISIBLE);
+                  updateOrientation();
+                  refreshDisplay();
+              }
+
+              @Override
+              public void onConfigurationChanged(Configuration newConfig) {
+                  super.onConfigurationChanged(newConfig);
+                  updateOrientation();
+              }
+
+              @Override
+              protected void onResume() {
+                  super.onResume();
+                  if (locked && !authenticating) startAuth();
+              }
+
+              @Override
+              protected void onStop() {
+                  super.onStop();
+                  if (!isChangingConfigurations()) {
+                      locked = true;
+                      authenticating = false;
+                      if (cancelSignal != null) cancelSignal.cancel();
+                      content.setVisibility(View.INVISIBLE);
+                      lockView.setVisibility(View.VISIBLE);
+                  }
+              }
+
+              private void updateOrientation() {
+                  boolean land = getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
+                  sciPanel.setVisibility(land ? View.VISIBLE : View.GONE);
+              }
+
+              private int dp(int v) {
+                  return Math.round(v * getResources().getDisplayMetrics().density);
+              }
+
+              private TextView text(float sp, int color, boolean bold) {
+                  TextView t = new TextView(this);
+                  t.setTextSize(sp);
+                  t.setTextColor(color);
+                  t.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
+                  t.setTextDirection(View.TEXT_DIRECTION_LTR);
+                  t.setMaxLines(1);
+                  if (bold) t.setTypeface(null, Typeface.BOLD);
+                  return t;
+              }
+
+              private LinearLayout buildCalculator() {
+                  LinearLayout root = new LinearLayout(this);
+                  root.setOrientation(LinearLayout.VERTICAL);
+                  root.setBackgroundColor(BG);
+                  root.setPadding(dp(12), dp(8), dp(12), dp(12));
+
+                  historyScroll = new ScrollView(this);
+                  historyBox = new LinearLayout(this);
+                  historyBox.setOrientation(LinearLayout.VERTICAL);
+                  historyScroll.addView(historyBox, new FrameLayout.LayoutParams(MATCH, WRAP));
+                  root.addView(historyScroll, new LinearLayout.LayoutParams(MATCH, 0, 1f));
+
+                  LinearLayout display = new LinearLayout(this);
+                  display.setOrientation(LinearLayout.VERTICAL);
+                  display.setPadding(dp(8), dp(8), dp(8), dp(8));
+                  exprView = text(20, SOFT, false);
+                  exprView.setEllipsize(TextUtils.TruncateAt.START);
+                  resultView = text(48, DARK, true);
+                  resultView.setAutoSizeTextTypeUniformWithConfiguration(14, 48, 1, TypedValue.COMPLEX_UNIT_SP);
+                  display.addView(exprView, new LinearLayout.LayoutParams(MATCH, WRAP));
+                  display.addView(resultView, new LinearLayout.LayoutParams(MATCH, WRAP));
+                  root.addView(display, new LinearLayout.LayoutParams(MATCH, WRAP));
+
+                  sciPanel = new LinearLayout(this);
+                  sciPanel.setOrientation(LinearLayout.VERTICAL);
+                  sciPanel.addView(buildRow(new String[]{"sin(", "cos(", "tan(", "log("}),
+                          new LinearLayout.LayoutParams(MATCH, dp(52)));
+                  sciPanel.addView(buildRow(new String[]{"ln(", "√(", "^", "π"}),
+                          new LinearLayout.LayoutParams(MATCH, dp(52)));
+                  root.addView(sciPanel, new LinearLayout.LayoutParams(MATCH, WRAP));
+
+                  String[][] keys = {
+                      {"C", "⌫", "%", "÷"},
+                      {"7", "8", "9", "×"},
+                      {"4", "5", "6", "−"},
+                      {"1", "2", "3", "+"},
+                      {"( )", "0", ".", "="}
+                  };
+                  for (String[] r : keys) {
+                      root.addView(buildRow(r), new LinearLayout.LayoutParams(MATCH, 0, 1f));
+                  }
+                  return root;
+              }
+
+              private LinearLayout buildRow(String[] labels) {
+                  LinearLayout row = new LinearLayout(this);
+                  row.setOrientation(LinearLayout.HORIZONTAL);
+                  for (String label : labels) {
+                      LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, MATCH, 1f);
+                      lp.setMargins(dp(4), dp(4), dp(4), dp(4));
+                      row.addView(makeKey(label), lp);
+                  }
+                  return row;
+              }
+
+              private Button makeKey(String label) {
+                  Button b = new Button(this);
+                  b.setText(label);
+                  b.setAllCaps(false);
+                  b.setTextSize(22);
+                  b.setPadding(0, 0, 0, 0);
+                  b.setMinWidth(0);
+                  b.setMinHeight(0);
+                  boolean op = "÷×−+=".contains(label);
+                  boolean num = label.matches("[0-9.]+");
+                  b.setBackgroundColor(op ? ORANGE : (num ? WHITE : GRAY));
+                  b.setTextColor(op ? WHITE : DARK);
+                  b.setOnClickListener(v -> onKey(label));
+                  return b;
+              }
+
+              private LinearLayout buildLockView() {
+                  LinearLayout v = new LinearLayout(this);
+                  v.setOrientation(LinearLayout.VERTICAL);
+                  v.setGravity(Gravity.CENTER);
+                  v.setBackgroundColor(BG);
+
+                  lockText = text(18, DARK, false);
+                  lockText.setGravity(Gravity.CENTER);
+                  lockText.setText("التطبيق مقفول");
+                  v.addView(lockText, new LinearLayout.LayoutParams(MATCH, WRAP));
+
+                  Button b = new Button(this);
+                  b.setText("افتح بالبصمة");
+                  b.setAllCaps(false);
+                  b.setOnClickListener(x -> {
+                      if (!authenticating) startAuth();
+                  });
+                  LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(WRAP, WRAP);
+                  lp.topMargin = dp(16);
+                  v.addView(b, lp);
+                  return v;
+              }
+
+              private void startAuth() {
+                  authenticating = true;
+                  lockText.setText("التطبيق مقفول");
+                  final CancellationSignal sig = new CancellationSignal();
+                  cancelSignal = sig;
+                  Executor ex = getMainExecutor();
+                  BiometricPrompt prompt = new BiometricPrompt.Builder(this)
+                          .setTitle("Calculator")
+                          .setSubtitle("استخدم بصمتك للفتح")
+                          .setNegativeButton("إلغاء", ex, (d, which) -> finish())
+                          .build();
+                  prompt.authenticate(sig, ex, new BiometricPrompt.AuthenticationCallback() {
+                      @Override
+                      public void onAuthenticationSucceeded(BiometricPrompt.AuthenticationResult result) {
+                          if (sig != cancelSignal) return;
+                          authenticating = false;
+                          locked = false;
+                          lockView.setVisibility(View.GONE);
+                          content.setVisibility(View.VISIBLE);
+                      }
+
+                      @Override
+                      public void onAuthenticationError(int code, CharSequence msg) {
+                          if (sig != cancelSignal) return;
+                          authenticating = false;
+                          lockText.setText("لم يتم التحقق. اضغط الزر للمحاولة مرة أخرى");
+                      }
+                  });
+              }
+
+              private void onKey(String k) {
+                  switch (k) {
+                      case "C":
+                          expr = "";
+                          lastExpr = "";
+                          lastResult = "0";
+                          justEvaluated = false;
+                          break;
+                      case "⌫":
+                          if (justEvaluated) {
+                              expr = "";
+                              justEvaluated = false;
+                          } else if (!expr.isEmpty()) {
+                              expr = expr.substring(0, expr.length() - 1);
+                          }
+                          break;
+                      case "=":
+                          evaluate();
+                          return;
+                      case "( )":
+                          if (justEvaluated) {
+                              expr = "";
+                              justEvaluated = false;
+                          }
+                          expr += parenSymbol();
+                          break;
+                      default:
+                          append(k);
+                  }
+                  refreshDisplay();
+              }
+
+              private void append(String k) {
+                  boolean isOp = "÷×−+%^".contains(k);
+                  if (justEvaluated) {
+                      expr = isOp ? lastResult : "";
+                      justEvaluated = false;
+                  }
+                  if (expr.isEmpty() && isOp) expr = lastResult;
+                  if (k.equals(".") && currentNumber().contains(".")) return;
+                  expr += k;
+              }
+
+              private String currentNumber() {
+                  int j = expr.length();
+                  while (j > 0 && (Character.isDigit(expr.charAt(j - 1)) || expr.charAt(j - 1) == '.')) j--;
+                  return expr.substring(j);
+              }
+
+              private String parenSymbol() {
+                  int open = 0, close = 0;
+                  for (char c : expr.toCharArray()) {
+                      if (c == '(') open++;
+                      else if (c == ')') close++;
+                  }
+                  char last = expr.isEmpty() ? ' ' : expr.charAt(expr.length() - 1);
+                  boolean canClose = open > close
+                          && (Character.isDigit(last) || last == ')' || last == '%' || last == 'π' || last == '.');
+                  return canClose ? ")" : "(";
+              }
+
+              private void evaluate() {
+                  if (expr.isEmpty()) return;
+                  try {
+                      String r = Calc.format(Calc.eval(expr));
+                      addHistory(expr, r);
+                      lastExpr = expr + " =";
+                      lastResult = r;
+                      expr = "";
+                      justEvaluated = true;
+                      refreshDisplay();
+                  } catch (Exception e) {
+                      resultView.setText("خطأ");
+                  }
+              }
+
+              private void refreshDisplay() {
+                  if (expr.isEmpty()) {
+                      exprView.setText(lastExpr);
+                      resultView.setText(lastResult);
+                  } else {
+                      exprView.setText(expr);
+                      String preview = "";
+                      try {
+                          preview = Calc.format(Calc.eval(expr));
+                      } catch (Exception ignored) {
+                      }
+                      resultView.setText(preview);
+                  }
+              }
+
+              private void addHistory(String e, String r) {
+                  TextView t = new TextView(this);
+                  t.setText(e + " = " + r);
+                  t.setTextSize(18);
+                  t.setTextColor(SOFT);
+                  t.setGravity(Gravity.END);
+                  t.setTextDirection(View.TEXT_DIRECTION_LTR);
+                  t.setPadding(dp(8), dp(6), dp(8), dp(6));
+                  t.setOnClickListener(v -> {
+                      expr = r;
+                      justEvaluated = false;
+                      refreshDisplay();
+                  });
+                  historyBox.addView(t, new LinearLayout.LayoutParams(MATCH, WRAP));
+                  historyScroll.post(() -> historyScroll.fullScroll(View.FOCUS_DOWN));
+              }
+          }
+          EOF
+
+          cat > make_icon.py <<'EOF'
+          from PIL import Image, ImageDraw
+
+          S = 512
+          img = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+          d = ImageDraw.Draw(img)
+          d.rounded_rectangle((0, 0, S - 1, S - 1), radius=110, fill=(55, 71, 79, 255))
+          d.rounded_rectangle((60, 60, S - 60, 200), radius=28, fill=(207, 216, 220, 255))
+          for r in range(4):
+              for c in range(4):
+                  x = 60 + c * 104
+                  y = 232 + r * 56
+                  color = (255, 149, 0, 255) if c == 3 else (144, 164, 174, 255)
+                  d.rounded_rectangle((x, y, x + 88, y + 46), radius=14, fill=color)
+          img = img.resize((192, 192), Image.Resampling.LANCZOS)
+          img.save("app/src/main/res/mipmap-xxxhdpi/ic_launcher.png")
+          EOF
+          python make_icon.py
+
+      - name: Build APK
+        working-directory: build_project
+        run: gradle assembleDebug --no-daemon --stacktrace
+
+      - name: Prepare APK
+        run: cp build_project/app/build/outputs/apk/debug/app-debug.apk Calculator.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Calculator-APK
+          path: Calculator.apk
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.run_number }}
+          name: Calculator v${{ github.run_number }}
+          files: Calculator.apk
